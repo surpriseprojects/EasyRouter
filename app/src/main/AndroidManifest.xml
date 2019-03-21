@@ -20,7 +20,7 @@
             </intent-filter>
             <meta-data
                 android:name="pageName"
-                android:value="main"/>
+                android:value="main|otherMain"/>
         </activity>
         <activity android:name=".SecondActivity">
             <meta-data

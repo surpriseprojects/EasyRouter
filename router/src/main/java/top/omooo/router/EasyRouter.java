@@ -13,6 +13,8 @@ import android.util.Log;
 
 import java.util.HashMap;
 
+import top.omooo.logger.Logger;
+
 /**
  * Created by Omooo
  * Date:2019/3/20
@@ -49,17 +51,19 @@ public class EasyRouter {
             Bundle bundle;
             ActivityInfo metaDataInfo;
             for (ActivityInfo activityInfo : activityInfos) {
-                metaDataInfo = application.getPackageManager().getActivityInfo(new ComponentName(application.getPackageName(), activityInfo.name), PackageManager.GET_META_DATA);
+                metaDataInfo = application.
+                        getPackageManager().
+                        getActivityInfo(new ComponentName(application.getPackageName(), activityInfo.name), PackageManager.GET_META_DATA);
                 if (metaDataInfo == null) {
-                    Log.e(TAG, "Activity: " + activityInfo.name + " don't have metaData!");
+                    Logger.e(TAG, "Activity: " + activityInfo.name + " don't have metaData!");
                 } else {
                     bundle = metaDataInfo.metaData;
                     if (bundle == null || TextUtils.isEmpty(bundle.getString(PAGE_NAME))) {
-                        Log.e(TAG, "Activity: " + activityInfo.name + " don't have pageName!");
+                        Logger.e(TAG, "Activity: " + activityInfo.name + " don't have pageName!");
                     } else {
                         mRouterMap.put(bundle.getString(PAGE_NAME), Class.forName(activityInfo.name));
-                        Log.i(TAG, "PageName: " + bundle.getString(PAGE_NAME));
-                        Log.i(TAG, "ClassName: " + activityInfo.name);
+                        Logger.d(TAG, "PageName: " + bundle.getString(PAGE_NAME));
+                        Logger.d(TAG, "ClassName: " + activityInfo.name);
                     }
                 }
             }
@@ -81,10 +85,18 @@ public class EasyRouter {
 
     public void navigate(String pageName) {
         if (TextUtils.isEmpty(pageName) || mRouterMap.get(pageName) == null) {
-            Log.e(TAG, "PageName: " + pageName + " is not available!");
+            Logger.e(TAG, "PageName: " + pageName + " is not available!");
             return;
         }
         Intent intent = new Intent(mContext, (Class<?>) mRouterMap.get(pageName));
         ActivityCompat.startActivity(mContext, intent, mBundle);
+    }
+
+    /**
+     * 编译时注解扫描所有 pageName，然后返回路由表
+     * {@link top.omooo.router_annotations.annotations.BindMetaDataAnn}
+     */
+    public void setRouterMap(HashMap<String, Object> map) {
+        this.mRouterMap = map;
     }
 }
