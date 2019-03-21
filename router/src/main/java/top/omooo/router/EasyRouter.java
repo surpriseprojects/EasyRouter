@@ -29,6 +29,10 @@ public class EasyRouter {
     private Context mContext;
     private Bundle mBundle;
 
+    private static final String META_DATE_EMPTY_DESC = "This Activity doesn't have metaData!";
+    private static final String PAGE_NAME_EMPTY_DESC = "This MetaData doesn't have pageName!";
+    private static final String PAGE_NAME_NOT_AVAIRABLE = "This pageName is not available!";
+
     public static EasyRouter getInstance() {
         return EasyRouterHolder.sRouter;
     }
@@ -55,15 +59,17 @@ public class EasyRouter {
                         getPackageManager().
                         getActivityInfo(new ComponentName(application.getPackageName(), activityInfo.name), PackageManager.GET_META_DATA);
                 if (metaDataInfo == null) {
-                    Logger.e(TAG, "Activity: " + activityInfo.name + " don't have metaData!");
+                    //ignore
+                    //即使没写 meta_data，也不会返回 null
+//                    Logger.e(TAG, META_DATE_EMPTY_DESC, activityInfo.name);
                 } else {
                     bundle = metaDataInfo.metaData;
                     if (bundle == null || TextUtils.isEmpty(bundle.getString(PAGE_NAME))) {
-                        Logger.e(TAG, "Activity: " + activityInfo.name + " don't have pageName!");
+                        Logger.e(TAG, PAGE_NAME_EMPTY_DESC, activityInfo.name);
                     } else {
                         mRouterMap.put(bundle.getString(PAGE_NAME), Class.forName(activityInfo.name));
-                        Logger.d(TAG, "PageName: " + bundle.getString(PAGE_NAME));
-                        Logger.d(TAG, "ClassName: " + activityInfo.name);
+                        Logger.d(TAG, null, "ClassName: " + activityInfo.name,
+                                "PageName: " + bundle.getString(PAGE_NAME));
                     }
                 }
             }
@@ -85,7 +91,7 @@ public class EasyRouter {
 
     public void navigate(String pageName) {
         if (TextUtils.isEmpty(pageName) || mRouterMap.get(pageName) == null) {
-            Logger.e(TAG, "PageName: " + pageName + " is not available!");
+            Logger.e(TAG, PAGE_NAME_NOT_AVAIRABLE, "pageName: " + pageName);
             return;
         }
         Intent intent = new Intent(mContext, (Class<?>) mRouterMap.get(pageName));
@@ -99,4 +105,10 @@ public class EasyRouter {
     public void setRouterMap(HashMap<String, Object> map) {
         this.mRouterMap = map;
     }
+
+    // TODO: 2019/3/21
+    /**
+     * 遗留问题:
+     * 1. 即使没写 meta_data，也不会返回空
+     */
 }

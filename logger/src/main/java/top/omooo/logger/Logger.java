@@ -1,6 +1,8 @@
 package top.omooo.logger;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 
 /**
@@ -14,21 +16,32 @@ public final class Logger {
     private static final String BOTTOM_LINE = "└────────────────────────────────────────────────────────────────────";
     private static final String CENTER_LINE = "├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄";
 
+    private static StringBuilder sSbSpace = new StringBuilder("│ ");
+    private static StringBuilder sSbValue = new StringBuilder();
+
     private Logger() {
 
     }
 
     public static void e(String mag) {
-        e(TAG, mag);
+        e(TAG, null, mag);
     }
 
-    public static void e(@NonNull String tag, String mag) {
+    public static void e(@NonNull String tag, @Nullable String desc, String... mags) {
         Log.e(tag, TOP_LINE);
-        Log.e(tag, "│ " + tag);
-        Log.e(tag, CENTER_LINE);
-        Log.e(tag, "│ " + mag);
+        for (int i = 0; i < mags.length; i++) {
+            if (i != 0) {
+                sSbSpace.append("  ");
+            }
+            Log.e(tag, sSbValue.append(sSbSpace.toString()).append(mags[i]).toString());
+            reset();
+        }
+        if (!TextUtils.isEmpty(desc)) {
+            Log.e(tag, CENTER_LINE);
+            Log.e(tag, sSbValue.append(sSbSpace.toString()).append(desc).toString());
+        }
         Log.e(tag, BOTTOM_LINE);
-
+        reset();
     }
 
     public static void i(String mag) {
@@ -45,15 +58,36 @@ public final class Logger {
     }
 
     public static void d(String mag) {
-        d(TAG, mag);
+        d(TAG, null, mag);
     }
 
-    public static void d(@NonNull String tag, String mag) {
+    public static void d(@NonNull String tag, String desc, String... mags) {
         Log.d(tag, TOP_LINE);
-        Log.d(tag, "│ " + tag);
-        Log.d(tag, CENTER_LINE);
-        Log.d(tag, "│ " + mag);
+        for (int i = 0; i < mags.length; i++) {
+            if (i != 0) {
+                sSbSpace.append("  ");
+            }
+            Log.d(tag, sSbValue.append(sSbSpace.toString()).append(mags[i]).toString());
+            reset();
+        }
+        if (!TextUtils.isEmpty(desc)) {
+            Log.d(tag, CENTER_LINE);
+            Log.d(tag, sSbValue.append(sSbSpace.toString()).append(desc).toString());
+        }
         Log.d(tag, BOTTOM_LINE);
-
+        reset();
     }
+
+    private static void reset() {
+        sSbSpace = new StringBuilder("│ ");
+        sSbValue = new StringBuilder();
+    }
+
+    // TODO: 2019/3/21  
+    /**
+     * 遗留问题:
+     * 1. 不要再方法里面调用 Log，抽出一个方法负责打印逻辑
+     * 2. Error 类添加跳转链接
+     * 3. 在不可跳转的当前类打印类明以及行数
+     */
 }
