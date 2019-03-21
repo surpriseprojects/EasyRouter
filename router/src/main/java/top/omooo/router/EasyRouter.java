@@ -14,6 +14,7 @@ import android.util.Log;
 import java.util.HashMap;
 
 import top.omooo.logger.Logger;
+import top.omooo.logger.StackTraceUtil;
 
 /**
  * Created by Omooo
@@ -65,7 +66,7 @@ public class EasyRouter {
                 } else {
                     bundle = metaDataInfo.metaData;
                     if (bundle == null || TextUtils.isEmpty(bundle.getString(PAGE_NAME))) {
-                        Logger.e(TAG, PAGE_NAME_EMPTY_DESC, activityInfo.name);
+                        Logger.e(TAG, PAGE_NAME_EMPTY_DESC, StackTraceUtil.getStackTrace(), activityInfo.name);
                     } else {
                         mRouterMap.put(bundle.getString(PAGE_NAME), Class.forName(activityInfo.name));
                         Logger.d(TAG, null, "ClassName: " + activityInfo.name,
@@ -91,7 +92,7 @@ public class EasyRouter {
 
     public void navigate(String pageName) {
         if (TextUtils.isEmpty(pageName) || mRouterMap.get(pageName) == null) {
-            Logger.e(TAG, PAGE_NAME_NOT_AVAIRABLE, "pageName: " + pageName);
+            Logger.e(TAG, PAGE_NAME_NOT_AVAIRABLE, StackTraceUtil.getStackTrace(), "pageName: " + pageName);
             return;
         }
         Intent intent = new Intent(mContext, (Class<?>) mRouterMap.get(pageName));
