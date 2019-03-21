@@ -1,7 +1,12 @@
 package top.omooo.router_processor;
 
 import com.google.auto.service.AutoService;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeSpec;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -12,6 +17,7 @@ import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
 import top.omooo.router_annotations.annotations.BindMetaDataAnn;
@@ -44,6 +50,7 @@ public class BindMetaDataProcessor extends AbstractProcessor {
                 //ignore
             }
         }
+        createFile(mRouterMap);
         return true;
     }
 
@@ -57,5 +64,31 @@ public class BindMetaDataProcessor extends AbstractProcessor {
     @Override
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latestSupported();
+    }
+
+    private void createFile(HashMap<String, Object> map) {
+        MethodSpec method = MethodSpec
+                .methodBuilder("getRouterMap")
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .returns(HashMap.class)
+                .addParameter(HashMap.class, "map")
+                .build();
+        TypeSpec type = TypeSpec
+                .classBuilder("RouterFactory")
+                .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                .addMethod(method)
+                .build();
+        JavaFile javaFile = JavaFile
+                .builder("top.omooo.easyrouter", type)
+                .build();
+        try {
+            File dir = new File("EasyRouter/app/src/main/java/gen");
+            if (!dir.exists()) {
+                dir.mkdir();
+            }
+            javaFile.writeTo(dir);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

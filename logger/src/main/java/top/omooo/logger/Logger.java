@@ -83,9 +83,4 @@ public final class Logger {
         sSbValue = new StringBuilder();
     }
 
-    // TODO: 2019/3/21  
-    /**
-     * 遗留问题:
-     * 1. 不要再方法里面调用 Log，抽出一个方法负责打印逻辑
-     */
 }

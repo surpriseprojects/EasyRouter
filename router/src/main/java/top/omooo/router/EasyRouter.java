@@ -59,13 +59,11 @@ public class EasyRouter {
                 metaDataInfo = application.
                         getPackageManager().
                         getActivityInfo(new ComponentName(application.getPackageName(), activityInfo.name), PackageManager.GET_META_DATA);
-                if (metaDataInfo == null) {
-                    //ignore
-                    //即使没写 meta_data，也不会返回 null
-//                    Logger.e(TAG, META_DATE_EMPTY_DESC, activityInfo.name);
+                if (metaDataInfo.metaData == null) {
+                    Logger.e(TAG, META_DATE_EMPTY_DESC, StackTraceUtil.getStackTrace(), activityInfo.name);
                 } else {
                     bundle = metaDataInfo.metaData;
-                    if (bundle == null || TextUtils.isEmpty(bundle.getString(PAGE_NAME))) {
+                    if (TextUtils.isEmpty(bundle.getString(PAGE_NAME))) {
                         Logger.e(TAG, PAGE_NAME_EMPTY_DESC, StackTraceUtil.getStackTrace(), activityInfo.name);
                     } else {
                         mRouterMap.put(bundle.getString(PAGE_NAME), Class.forName(activityInfo.name));
@@ -107,9 +105,4 @@ public class EasyRouter {
         this.mRouterMap = map;
     }
 
-    // TODO: 2019/3/21
-    /**
-     * 遗留问题:
-     * 1. 即使没写 meta_data，也不会返回空
-     */
 }

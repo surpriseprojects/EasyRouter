@@ -10,6 +10,13 @@ import top.omooo.router_annotations.annotations.BindMetaDataAnn;
 @BindMetaDataAnn("main")
 public class MainActivity extends AppCompatActivity {
 
+    // TODO: 2019/3/21
+    /**
+     * 遗留问题汇总
+     * 1. JavaPoet 抛出 Map
+     * 2. Logger 错误调用链
+     * 3. 多个 pageName 情况
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
