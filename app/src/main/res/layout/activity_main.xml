@@ -11,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:text="跳转到 SecondActivity（有 PageName）!"
+        android:text="跳转到当前 Module 的 SecondActivity!"
         android:textAllCaps="false" />
 
     <Button
@@ -19,6 +19,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:text="跳转到 ThirdActivity（无 PageName）!"
+        android:text="跳转到当前 Module 的 ThirdActivity!"
+        android:textAllCaps="false" />
+
+    <Button
+        android:id="@+id/btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="跳转到其它 Module 的 MainActivity!"
         android:textAllCaps="false" />
 </LinearLayout>

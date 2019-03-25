@@ -6,7 +6,6 @@ import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,7 +21,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
-import top.omooo.router_annotations.annotations.BindMetaDataAnn;
+import top.omooo.router_annotations.annotations.Router;
 
 /**
  * Created by Omooo
@@ -44,24 +43,15 @@ public class BindMetaDataProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
-        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(BindMetaDataAnn.class);
-        for (Element element : elements) {
-            TypeElement typeElement = (TypeElement) element;
-            BindMetaDataAnn metaDataAnn = typeElement.getAnnotation(BindMetaDataAnn.class);
-            try {
-                mRouterMap.put(metaDataAnn.value(), Class.forName(typeElement.getQualifiedName().toString()));
-            } catch (ClassNotFoundException e) {
-                //ignore
-            }
-        }
-        createFile(mRouterMap);
+        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(Router.class);
+        createFile(elements);
         return true;
     }
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
         Set<String> set = new HashSet<>();
-        set.add(BindMetaDataAnn.class.getCanonicalName());
+        set.add(Router.class.getCanonicalName());
         return set;
     }
 
@@ -70,22 +60,27 @@ public class BindMetaDataProcessor extends AbstractProcessor {
         return SourceVersion.latestSupported();
     }
 
-    private void createFile(HashMap<String, Object> map) {
-        MethodSpec method = MethodSpec
-                .methodBuilder("getRouterMap")
-                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                .returns(HashMap.class)
-                .addParameter(HashMap.class, "map")
-                .addStatement("return map")
+    private void createFile(Set<? extends Element> elements) {
+        FieldSpec fieldSpec = FieldSpec
+                .builder(HashMap.class, "sHashMap", Modifier.PUBLIC, Modifier.STATIC)
                 .build();
-//        FieldSpec fieldSpec = FieldSpec
-//                .builder(HashMap.class, "map", Modifier.PUBLIC)
-//                .build();
+        MethodSpec.Builder methodBuilder = MethodSpec
+                .methodBuilder("init")
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .addException(ClassNotFoundException.class)
+                .returns(void.class);
+        methodBuilder.addStatement("sHashMap = new HashMap()");
+        for (Element element : elements) {
+            TypeElement typeElement = (TypeElement) element;
+            Router metaDataAnn = typeElement.getAnnotation(Router.class);
+            methodBuilder.addStatement("sHashMap.put($S,$T.forName($S))", metaDataAnn.value(), Class.class, typeElement.getQualifiedName().toString());
+        }
+
         TypeSpec type = TypeSpec
                 .classBuilder("RouterFactory")
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                .addMethod(method)
-//                .addField(fieldSpec)
+                .addMethod(methodBuilder.build())
+                .addField(fieldSpec)
                 .build();
         JavaFile javaFile = JavaFile
                 .builder("top.omooo.easyrouter", type)

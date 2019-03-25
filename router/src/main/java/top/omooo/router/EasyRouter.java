@@ -7,14 +7,20 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 
 import top.omooo.logger.Logger;
 import top.omooo.logger.StackTraceUtil;
+import top.omooo.router_annotations.annotations.Router;
 
 /**
  * Created by Omooo
@@ -29,6 +35,8 @@ public class EasyRouter {
     private HashMap<String, Object> mRouterMap;
     private Context mContext;
     private Bundle mBundle;
+
+    private boolean isUseAnno = true;  //使用注解
 
     private static final String META_DATE_EMPTY_DESC = "This Activity doesn't have metaData!";
     private static final String PAGE_NAME_EMPTY_DESC = "This MetaData doesn't have pageName!";
@@ -49,7 +57,11 @@ public class EasyRouter {
      */
     public void inject(Application application) {
         mRouterMap = new HashMap<>();
-
+        if (isUseAnno) {
+            getRouterMapFromAnno();
+            return;
+        }
+        //使用 Meta-Data
         try {
             ActivityInfo[] activityInfos = application.getPackageManager()
                     .getPackageInfo(application.getPackageName(), PackageManager.GET_ACTIVITIES)
@@ -79,37 +91,82 @@ public class EasyRouter {
         }
     }
 
-    public EasyRouter with(Context context) {
+    public EasyRouter with(@NonNull Context context) {
         this.mContext = context;
         return this;
     }
 
-    public EasyRouter putAll(Bundle bundle) {
-        this.mBundle = bundle;
-        return this;
-    }
-
     public void navigate(String pageName) {
+        Log.i(TAG, "navigate: ");
         if (TextUtils.isEmpty(pageName) || mRouterMap.get(pageName) == null) {
             Logger.e(TAG, PAGE_NAME_NOT_AVAIRABLE, StackTraceUtil.getStackTrace(), "pageName: " + pageName);
             return;
         }
         Intent intent = new Intent(mContext, (Class<?>) mRouterMap.get(pageName));
-        ActivityCompat.startActivity(mContext, intent, mBundle);
+        if (mBundle != null){
+            intent.putExtras(mBundle);
+        }
+        mContext.startActivity(intent);
     }
 
     /**
      * 编译时注解扫描所有 pageName，然后返回路由表
-     * {@link top.omooo.router_annotations.annotations.BindMetaDataAnn}
+     * {@link Router}
      */
-    public void getRouterMapFromAnno(HashMap<String, Object> map) {
+    public void getRouterMapFromAnno() {
         try {
-            Class clazz = Class.forName("top.omooo.easyrouter/RouterFactory");
-//            clazz.getClass().getMethod("getRouterMap")
-        } catch (ClassNotFoundException e) {
+            Class clazz = Class.forName("top.omooo.easyrouter.RouterFactory");
+            Method method = clazz.getMethod("init");
+            method.invoke(null);
+            mRouterMap = (HashMap<String, Object>) clazz.getField("sHashMap").get(clazz);
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
             e.printStackTrace();
         }
-        this.mRouterMap = map;
     }
 
+    /**
+     * 添加 Bundle 数据
+     */
+
+    public EasyRouter putAll(Bundle bundle) {
+        mBundle = bundle;
+        return this;
+    }
+
+    public EasyRouter putString(String key, String value) {
+        Log.i(TAG, "putString: ");
+        if (mBundle == null) {
+            mBundle = new Bundle();
+        } else {
+            mBundle.putString(key, value);
+        }
+        return this;
+    }
+
+    public EasyRouter putInt(String key, int value) {
+        if (mBundle == null) {
+            mBundle = new Bundle();
+        } else {
+            mBundle.putInt(key, value);
+        }
+        return this;
+    }
+
+    public EasyRouter putParcelable(String key, Parcelable value) {
+        if (mBundle == null) {
+            mBundle = new Bundle();
+        } else {
+            mBundle.putParcelable(key, value);
+        }
+        return this;
+    }
+
+    public EasyRouter putSerializable(String key, Serializable value) {
+        if (mBundle == null) {
+            mBundle = new Bundle();
+        } else {
+            mBundle.putSerializable(key, value);
+        }
+        return this;
+    }
 }

@@ -8,10 +8,10 @@ import java.lang.annotation.Target;
 /**
  * Created by Omooo
  * Date:2019/3/20
- * Desc:绑定元数据的注解
+ * Desc:绑定路由的注解
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)
-public @interface BindMetaDataAnn {
+public @interface Router {
     String value();
 }

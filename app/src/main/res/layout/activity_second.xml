@@ -5,7 +5,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <Button
         android:id="@+id/tv_jump"
-        android:text="SecondActivity（有 PageName）"
+        android:text="app module SecondActivity"
         android:textAllCaps="false"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
