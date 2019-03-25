@@ -1,6 +1,7 @@
 package top.omooo.router_processor;
 
 import com.google.auto.service.AutoService;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
@@ -12,6 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
@@ -31,11 +33,13 @@ import top.omooo.router_annotations.annotations.BindMetaDataAnn;
 public class BindMetaDataProcessor extends AbstractProcessor {
 
     private HashMap<String, Object> mRouterMap;
+    private Filer mFiler;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
         super.init(processingEnvironment);
         mRouterMap = new HashMap<>();
+        mFiler = processingEnvironment.getFiler();
     }
 
     @Override
@@ -72,21 +76,22 @@ public class BindMetaDataProcessor extends AbstractProcessor {
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                 .returns(HashMap.class)
                 .addParameter(HashMap.class, "map")
+                .addStatement("return map")
                 .build();
+//        FieldSpec fieldSpec = FieldSpec
+//                .builder(HashMap.class, "map", Modifier.PUBLIC)
+//                .build();
         TypeSpec type = TypeSpec
                 .classBuilder("RouterFactory")
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .addMethod(method)
+//                .addField(fieldSpec)
                 .build();
         JavaFile javaFile = JavaFile
                 .builder("top.omooo.easyrouter", type)
                 .build();
         try {
-            File dir = new File("EasyRouter/app/src/main/java/gen");
-            if (!dir.exists()) {
-                dir.mkdir();
-            }
-            javaFile.writeTo(dir);
+            javaFile.writeTo(mFiler);
         } catch (IOException e) {
             e.printStackTrace();
         }

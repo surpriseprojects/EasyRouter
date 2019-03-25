@@ -49,6 +49,7 @@ public class EasyRouter {
      */
     public void inject(Application application) {
         mRouterMap = new HashMap<>();
+
         try {
             ActivityInfo[] activityInfos = application.getPackageManager()
                     .getPackageInfo(application.getPackageName(), PackageManager.GET_ACTIVITIES)
@@ -101,7 +102,13 @@ public class EasyRouter {
      * 编译时注解扫描所有 pageName，然后返回路由表
      * {@link top.omooo.router_annotations.annotations.BindMetaDataAnn}
      */
-    public void setRouterMap(HashMap<String, Object> map) {
+    public void getRouterMapFromAnno(HashMap<String, Object> map) {
+        try {
+            Class clazz = Class.forName("top.omooo.easyrouter/RouterFactory");
+//            clazz.getClass().getMethod("getRouterMap")
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
         this.mRouterMap = map;
     }
 
