@@ -1,0 +1,10 @@
+{
+  "modules": [
+    {
+      "packageName": "top.omooo.easyrouter"
+    },
+    {
+      "packageName": "top.omooo.other_module"
+    }
+  ]
+}

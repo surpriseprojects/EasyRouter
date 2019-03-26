@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
@@ -13,10 +14,18 @@ import android.support.v4.app.ActivityCompat;
 import android.text.TextUtils;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import top.omooo.logger.Logger;
 import top.omooo.logger.StackTraceUtil;
@@ -32,7 +41,7 @@ public class EasyRouter {
 
     private static final String PAGE_NAME = "pageName";
     //路由表 key:pageName value: Activity
-    private HashMap<String, Object> mRouterMap;
+    private HashMap<String, String> mRouterMap;
     private Context mContext;
     private Bundle mBundle;
 
@@ -58,7 +67,7 @@ public class EasyRouter {
     public void inject(Application application) {
         mRouterMap = new HashMap<>();
         if (isUseAnno) {
-            getRouterMapFromAnno();
+            getRouterMapFromAnno(application);
             return;
         }
         //使用 Meta-Data
@@ -79,13 +88,13 @@ public class EasyRouter {
                     if (TextUtils.isEmpty(bundle.getString(PAGE_NAME))) {
                         Logger.e(TAG, PAGE_NAME_EMPTY_DESC, StackTraceUtil.getStackTrace(), activityInfo.name);
                     } else {
-                        mRouterMap.put(bundle.getString(PAGE_NAME), Class.forName(activityInfo.name));
+                        mRouterMap.put(bundle.getString(PAGE_NAME), activityInfo.name);
                         Logger.d(TAG, null, "ClassName: " + activityInfo.name,
                                 "PageName: " + bundle.getString(PAGE_NAME));
                     }
                 }
             }
-        } catch (PackageManager.NameNotFoundException | ClassNotFoundException e) {
+        } catch (PackageManager.NameNotFoundException e) {
             //ignore
             e.printStackTrace();
         }
@@ -96,32 +105,67 @@ public class EasyRouter {
         return this;
     }
 
-    public void navigate(String pageName) {
+    public void navigate(@NonNull String pageName) {
         Log.i(TAG, "navigate: ");
-        if (TextUtils.isEmpty(pageName) || mRouterMap.get(pageName) == null) {
+        if (!TextUtils.isEmpty(pageName) && !TextUtils.isEmpty(mRouterMap.get(pageName))) {
+            Intent intent = new Intent();
+            intent.setClassName(mContext.getPackageName(), mRouterMap.get(pageName));
+            if (mBundle != null) {
+                intent.putExtras(mBundle);
+            }
+            mContext.startActivity(intent);
+        } else {
             Logger.e(TAG, PAGE_NAME_NOT_AVAIRABLE, StackTraceUtil.getStackTrace(), "pageName: " + pageName);
-            return;
         }
-        Intent intent = new Intent(mContext, (Class<?>) mRouterMap.get(pageName));
-        if (mBundle != null){
-            intent.putExtras(mBundle);
-        }
-        mContext.startActivity(intent);
     }
 
     /**
      * 编译时注解扫描所有 pageName，然后返回路由表
      * {@link Router}
      */
-    public void getRouterMapFromAnno() {
+    public void getRouterMapFromAnno(Application application) {
+        List<String> moduleList = getModuleList(application);
+        if (moduleList == null || moduleList.size() == 0) {
+            return;
+        }
         try {
-            Class clazz = Class.forName("top.omooo.easyrouter.RouterFactory");
-            Method method = clazz.getMethod("init");
-            method.invoke(null);
-            mRouterMap = (HashMap<String, Object>) clazz.getField("sHashMap").get(clazz);
+            for (String moduleName : moduleList) {
+                Class clazz = Class.forName(moduleName + ".factory.RouterFactory");
+                Method method = clazz.getMethod("init");
+                method.invoke(null);
+                mRouterMap.putAll((HashMap<String, String>) clazz.getField("sHashMap").get(clazz));
+            }
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 获取所有包含 {@link Router} 注解的 module
+     */
+    private List<String> getModuleList(Application application) {
+        List<String> moduleList = new ArrayList<>();
+        StringBuilder stringBuilder = new StringBuilder();
+        try {
+            //获取assets资源管理器
+            AssetManager assetManager = application.getAssets();
+            //通过管理器打开文件并读取
+            BufferedReader bf = new BufferedReader(new InputStreamReader(
+                    assetManager.open("module_info")));
+            String line;
+            while ((line = bf.readLine()) != null) {
+                stringBuilder.append(line);
+            }
+            JSONObject jsonObject = new JSONObject(stringBuilder.toString());
+            JSONArray jsonArray = jsonObject.getJSONArray("modules");
+            for (int i = 0; i < jsonArray.length(); i++) {
+                moduleList.add(((JSONObject) jsonArray.get(i)).getString("packageName"));
+            }
+            return moduleList;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**
@@ -137,6 +181,7 @@ public class EasyRouter {
         Log.i(TAG, "putString: ");
         if (mBundle == null) {
             mBundle = new Bundle();
+            mBundle.putString(key, value);
         } else {
             mBundle.putString(key, value);
         }

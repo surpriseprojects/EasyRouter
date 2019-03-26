@@ -19,6 +19,7 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 
 import top.omooo.router_annotations.annotations.Router;
@@ -31,13 +32,11 @@ import top.omooo.router_annotations.annotations.Router;
 @AutoService(Processor.class)
 public class BindMetaDataProcessor extends AbstractProcessor {
 
-    private HashMap<String, Object> mRouterMap;
     private Filer mFiler;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
         super.init(processingEnvironment);
-        mRouterMap = new HashMap<>();
         mFiler = processingEnvironment.getFiler();
     }
 
@@ -67,13 +66,17 @@ public class BindMetaDataProcessor extends AbstractProcessor {
         MethodSpec.Builder methodBuilder = MethodSpec
                 .methodBuilder("init")
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                .addException(ClassNotFoundException.class)
                 .returns(void.class);
         methodBuilder.addStatement("sHashMap = new HashMap()");
+        String packageName = "";
         for (Element element : elements) {
             TypeElement typeElement = (TypeElement) element;
             Router metaDataAnn = typeElement.getAnnotation(Router.class);
-            methodBuilder.addStatement("sHashMap.put($S,$T.forName($S))", metaDataAnn.value(), Class.class, typeElement.getQualifiedName().toString());
+            methodBuilder.addStatement("sHashMap.put($S,$S)", metaDataAnn.value(), typeElement.getQualifiedName());
+            if (packageName.equals("")) {
+                packageName = typeElement.getQualifiedName().toString()
+                        .replace("." + typeElement.getSimpleName(), "");
+            }
         }
 
         TypeSpec type = TypeSpec
@@ -83,7 +86,7 @@ public class BindMetaDataProcessor extends AbstractProcessor {
                 .addField(fieldSpec)
                 .build();
         JavaFile javaFile = JavaFile
-                .builder("top.omooo.easyrouter", type)
+                .builder(packageName + ".factory", type)
                 .build();
         try {
             javaFile.writeTo(mFiler);
