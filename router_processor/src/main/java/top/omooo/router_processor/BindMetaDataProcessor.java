@@ -13,6 +13,7 @@ import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
+import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
@@ -21,6 +22,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
 
 import top.omooo.router_annotations.annotations.Router;
 
@@ -33,11 +35,13 @@ import top.omooo.router_annotations.annotations.Router;
 public class BindMetaDataProcessor extends AbstractProcessor {
 
     private Filer mFiler;
+    private Messager mMessager;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
         super.init(processingEnvironment);
         mFiler = processingEnvironment.getFiler();
+        mMessager = processingEnvironment.getMessager();
     }
 
     @Override
@@ -71,6 +75,7 @@ public class BindMetaDataProcessor extends AbstractProcessor {
         String packageName = "";
         for (Element element : elements) {
             TypeElement typeElement = (TypeElement) element;
+            mMessager.printMessage(Diagnostic.Kind.NOTE, typeElement.getQualifiedName());
             Router metaDataAnn = typeElement.getAnnotation(Router.class);
             methodBuilder.addStatement("sHashMap.put($S,$S)", metaDataAnn.value(), typeElement.getQualifiedName());
             if (packageName.equals("")) {
